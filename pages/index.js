@@ -23,6 +23,7 @@ export default function Home({ roles, shipsData }) {
         body: JSON.stringify(payload)
       })
       const data = await res.json()
+
       if (data.status === 'ok') {
         alert('Данные сохранены!')
         setPilotName('')
@@ -38,27 +39,30 @@ export default function Home({ roles, shipsData }) {
   }
 
   return (
-    <div className="container">
-      <h1>4Crabs Pilot Tracker</h1>
+    <div className="container mx-auto p-6 text-white bg-black min-h-screen font-sans">
+      <h1 className="text-3xl mb-6">4Crabs Pilot Tracker</h1>
 
-      <form onSubmit={handleSubmit}>
-        <div className="card">
-          <label>Имя пилота:</label><br/>
+      <form onSubmit={handleSubmit} className="space-y-4">
+
+        <div className="card p-4 bg-gray-900 rounded shadow">
+          <label className="block mb-1">Имя пилота:</label>
           <input
             type="text"
             value={pilotName}
             onChange={e => setPilotName(e.target.value)}
             placeholder="Введите ник"
             required
+            className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700"
           />
         </div>
 
-        <div className="card">
-          <label>Роль:</label><br/>
+        <div className="card p-4 bg-gray-900 rounded shadow">
+          <label className="block mb-1">Роль:</label>
           <select
             value={selectedRole}
             onChange={e => { setSelectedRole(e.target.value); setSelectedShips([]) }}
             required
+            className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700"
           >
             <option value="">-- Выберите роль --</option>
             {roles.map(r => <option key={r} value={r}>{r}</option>)}
@@ -66,30 +70,37 @@ export default function Home({ roles, shipsData }) {
         </div>
 
         {shipsForRole.length > 0 && (
-          <div className="card">
-            <label>Выберите корабли:</label><br/>
-            {shipsForRole.map(ship => (
-              <div key={ship}>
-                <input
-                  type="checkbox"
-                  id={ship}
-                  value={ship}
-                  checked={selectedShips.includes(ship)}
-                  onChange={e => {
-                    const checked = e.target.checked
-                    setSelectedShips(prev =>
-                      checked ? [...prev, ship] : prev.filter(s => s !== ship)
-                    )
-                  }}
-                />
-                <label htmlFor={ship} style={{ marginLeft: '8px' }}>{ship}</label>
-              </div>
-            ))}
+          <div className="card p-4 bg-gray-900 rounded shadow">
+            <label className="block mb-2">Выберите корабли:</label>
+            <div className="grid grid-cols-2 gap-2">
+              {shipsForRole.map(ship => (
+                <label key={ship} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    value={ship}
+                    checked={selectedShips.includes(ship)}
+                    onChange={e => {
+                      const checked = e.target.checked
+                      setSelectedShips(prev =>
+                        checked ? [...prev, ship] : prev.filter(s => s !== ship)
+                      )
+                    }}
+                    className="w-4 h-4"
+                  />
+                  <span>{ship}</span>
+                </label>
+              ))}
+            </div>
           </div>
         )}
 
-        <div className="card">
-          <button type="submit" className="button">Сохранить</button>
+        <div className="card p-4 bg-gray-900 rounded shadow">
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-bold"
+          >
+            Сохранить
+          </button>
         </div>
       </form>
     </div>
