@@ -9,11 +9,15 @@ export default function Home() {
 
   // Загрузка ролей из Google Sheets через API
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_GSHEET_API}?sheet=Roles`)
-      .then(res => res.json())
-      .then(data => setRoles(data))
-      .catch(err => console.error('Error loading roles:', err))
-  }, [])
+  fetch(`${process.env.NEXT_PUBLIC_GSHEET_API}?sheet=Roles`)
+    .then(res => res.json())
+    .then(data => {
+      // data = [{"Role":"DPS"}, {"Role":"Логист"}, ...]
+      const rolesArray = data.map(r => r.Role)  // <-- обязательно берём свойство Role
+      setRoles(rolesArray)
+    })
+    .catch(err => console.error('Error loading roles:', err))
+}, [])
 
   // Подгрузка кораблей в зависимости от выбранной роли
   useEffect(() => {
@@ -62,10 +66,11 @@ export default function Home() {
 
         <div className="card">
           <label>Выберите роль:</label><br/>
-          <select value={selectedRole} onChange={e => { setSelectedRole(e.target.value); setSelectedShips([]); }} required>
+          <select value={selectedRole} onChange={e => setSelectedRole(e.target.value)} required>
             <option value="">-- Выберите роль --</option>
             {roles.map(role => <option key={role} value={role}>{role}</option>)}
           </select>
+
         </div>
 
         {ships.length > 0 && (
