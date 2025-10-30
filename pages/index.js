@@ -1,55 +1,98 @@
-import { useState, useEffect } from "react";
-import { getPilot, upsertPilot } from "../utils/api";
-import RoleSelector from "../components/RoleSelector";
+import { useEffect, useState } from 'react'
 
-export default function PilotForm() {
-  const [nick, setNick] = useState("");
-  const [roles, setRoles] = useState([]);
-  const [ships, setShips] = useState([]);
-  const [notes, setNotes] = useState("");
-  const [level, setLevel] = useState(1);
-  const [status, setStatus] = useState("");
+export default function Home() {
+  const [roles, setRoles] = useState([])
+  const [selectedRole, setSelectedRole] = useState('')
+  const [ships, setShips] = useState([])
+  const [selectedShips, setSelectedShips] = useState([])
+  const [pilotName, setPilotName] = useState('')
 
-  const loadData = async () => {
-    if(nick){
-      const data = await getPilot(nick);
-      if(data){
-        setRoles(data["Роли"]?.split(", ") || []);
-        setShips(data["Корабли"]?.split(", ") || []);
-        setNotes(data["Примечания"] || "");
-        setLevel(data["Уровень подготовки"] || 1);
-      }
+  // Загрузка ролей из Google Sheets через API
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_GSHEET_API}?sheet=Roles`)
+      .then(res => res.json())
+      .then(data => setRoles(data))
+      .catch(err => console.error('Error loading roles:', err))
+  }, [])
+
+  // Подгрузка кораблей в зависимости от выбранной роли
+  useEffect(() => {
+    if (!selectedRole) return
+    fetch(`${process.env.NEXT_PUBLIC_GSHEET_API}?sheet=Ships&role=${selectedRole}`)
+      .then(res => res.json())
+      .then(data => setShips(data))
+      .catch(err => console.error('Error loading ships:', err))
+  }, [selectedRole])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!pilotName || !selectedRole) return alert('Заполните имя и роль!')
+    const payload = { pilotName, role: selectedRole, ships: selectedShips }
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_GSHEET_API}?sheet=Pilots`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      alert('Данные сохранены!')
+    } catch (err) {
+      console.error(err)
+      alert('Ошибка при сохранении')
     }
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await upsertPilot({
-      "Ник пилота": nick,
-      "Роли": roles.join(", "),
-      "Корабли": ships.join(", "),
-      "Примечания": notes,
-      "Уровень подготовки": level
-    });
-    setStatus("Данные сохранены!");
-  }
-
-  useEffect(()=>{ loadData() }, [nick]);
-
   return (
-    <div className="max-w-xl mx-auto p-4">
-      <h2>Форма пилота</h2>
+    <div className="container">
+      <div className="header">
+        <div className="logo">🦀</div>
+        <h1>4Crabs Pilot Tracker</h1>
+      </div>
+
       <form onSubmit={handleSubmit}>
-        <label>Ник пилота</label>
-        <input type="text" value={nick} onChange={e=>setNick(e.target.value)} required />
-        <RoleSelector selectedRoles={roles} setSelectedRoles={setRoles} selectedShips={ships} setSelectedShips={setShips} />
-        <label>Примечания</label>
-        <textarea value={notes} onChange={e=>setNotes(e.target.value)} />
-        <label>Уровень подготовки (1–5)</label>
-        <input type="number" value={level} min={1} max={5} onChange={e=>setLevel(e.target.value)} />
-        <button type="submit">Сохранить</button>
+        <div className="card">
+          <label>Имя пилота:</label><br/>
+          <input
+            type="text"
+            value={pilotName}
+            onChange={e => setPilotName(e.target.value)}
+            placeholder="Введите ник"
+            required
+          />
+        </div>
+
+        <div className="card">
+          <label>Выберите роль:</label><br/>
+          <select value={selectedRole} onChange={e => { setSelectedRole(e.target.value); setSelectedShips([]); }} required>
+            <option value="">-- Выберите роль --</option>
+            {roles.map(role => <option key={role} value={role}>{role}</option>)}
+          </select>
+        </div>
+
+        {ships.length > 0 && (
+          <div className="card">
+            <label>Выберите корабли, которые умеете летать:</label><br/>
+            {ships.map(ship => (
+              <div key={ship}>
+                <input
+                  type="checkbox"
+                  id={ship}
+                  value={ship}
+                  checked={selectedShips.includes(ship)}
+                  onChange={e => {
+                    const checked = e.target.checked
+                    setSelectedShips(prev => checked ? [...prev, ship] : prev.filter(s => s !== ship))
+                  }}
+                />
+                <label htmlFor={ship} style={{ marginLeft: '8px' }}>{ship}</label>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="card">
+          <button type="submit" className="button">Сохранить</button>
+        </div>
       </form>
-      {status && <p>{status}</p>}
     </div>
   )
 }
