@@ -8,7 +8,7 @@ module.exports = {
     extend: {
       colors: {
         eve: {
-          bg: "#05060a",
+          bg: "#030407ff",
           panel: "#0f1720",
           accent: "#00c3d8",
           muted: "#9aa4b2"
